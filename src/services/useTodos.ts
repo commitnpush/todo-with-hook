@@ -1,5 +1,11 @@
 import produce from "immer";
-import { useCallback, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Storage, Todo } from "types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -7,12 +13,12 @@ interface Result {
   todos: Todo[];
   remaining: number;
   addTodo: (title: string) => void;
+  remove: (id: string) => void;
   setTitle: (id: string, title: string) => void;
   setCompletedAll: (completed: boolean) => void;
   setCompleted: (id: string, completed: boolean) => void;
-  // clearCompleted: () => void;
-  // isCompletedAll: boolean;
-  // remove: (id: string) => void;
+  clearCompleted: () => void;
+  isCompletedAll: boolean;
 }
 
 interface Options {
@@ -28,6 +34,10 @@ const useTodos = (options?: Options): Result => {
     () => todos.filter((todo) => !todo.completed).length,
     [todos]
   );
+  const isCompletedAll = useMemo(
+    () => todos.every((todo) => todo.completed),
+    [todos]
+  );
   const addTodo = useCallback((title: string) => {
     if (title === "") {
       throw new Error("할 일을 입력해 주세요.");
@@ -35,6 +45,9 @@ const useTodos = (options?: Options): Result => {
     setTodos((draft) =>
       draft.concat({ title, id: uuidv4(), completed: false })
     );
+  }, []);
+  const remove = useCallback((id: string) => {
+    setTodos((draft) => draft.filter((todo) => todo.id !== id));
   }, []);
   const setTitle = useCallback((id: string, title: string) => {
     setTodos((draft) =>
@@ -61,8 +74,32 @@ const useTodos = (options?: Options): Result => {
       })
     );
   }, []);
+  const clearCompleted = useCallback(() => {
+    setTodos((draft) => draft.filter((todo) => !todo.completed));
+  }, []);
+  useLayoutEffect(() => {
+    if (initialTodos) return;
+    console.debug(storage);
+    const loadedTodos = (storage || localStorage).getItem(storageName);
+    if (loadedTodos !== null) {
+      setTodos(JSON.parse(loadedTodos));
+    }
+  }, [initialTodos, storageName, storage]);
+  useEffect(() => {
+    (storage || localStorage).setItem(storageName, JSON.stringify(todos));
+  }, [storage, storageName, todos]);
 
-  return { todos, remaining, addTodo, setTitle, setCompletedAll, setCompleted };
+  return {
+    todos,
+    remaining,
+    isCompletedAll,
+    addTodo,
+    remove,
+    setTitle,
+    setCompletedAll,
+    setCompleted,
+    clearCompleted,
+  };
 };
 
 export default useTodos;
