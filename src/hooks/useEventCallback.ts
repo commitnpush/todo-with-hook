@@ -8,7 +8,7 @@ function useEventCallback<A extends any[], R = void>(
 ) {
   const ref = useRef(callback);
   useEnhancedEffect(() => {
-    console.debug("effect");
+    // console.debug("effect");
     ref.current = callback;
   });
   return useCallback((...args: A) => ref.current(...args), []);

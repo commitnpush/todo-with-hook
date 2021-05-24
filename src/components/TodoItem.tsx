@@ -1,4 +1,11 @@
-import { memo, useEffect, useRef, useState, KeyboardEvent } from "react";
+import {
+  memo,
+  useEffect,
+  useRef,
+  useState,
+  KeyboardEvent,
+  DragEvent,
+} from "react";
 import cc from "classcat";
 import { useEventCallback } from "hooks";
 
@@ -21,6 +28,7 @@ const TodoItem = ({
 }: Props) => {
   const editInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const handleDoubleClick = useEventCallback(() => {
     setEditing(true);
   });
@@ -52,11 +60,25 @@ const TodoItem = ({
   const handleRemove = useEventCallback(() => {
     onRemove?.(id);
   });
+  const handleDragStart = (event: DragEvent<HTMLLIElement>) => {
+    setDragging(true);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("sourceId", id);
+  };
+  const handleDragEnd = (event: DragEvent<HTMLLIElement>) => {
+    setDragging(false);
+  };
   useEffect(() => {
     editInputRef.current![editing ? "focus" : "blur"]();
   }, [editing]);
   return (
-    <li className={cc({ completed, editing })}>
+    <li
+      className={cc({ completed, editing })}
+      draggable="true"
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      style={{ backgroundColor: dragging ? "#ddd" : "#fff" }}
+    >
       <div className="view">
         <input
           type="checkbox"
@@ -64,7 +86,9 @@ const TodoItem = ({
           checked={completed}
           onChange={handleChangeCompleted}
         />
-        <label onDoubleClick={handleDoubleClick}>{title}</label>
+        <label data-id={id} onDoubleClick={handleDoubleClick}>
+          {title}
+        </label>
         <button className="destroy" onClick={handleRemove} />
       </div>
       <input

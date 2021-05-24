@@ -18,6 +18,7 @@ interface Result {
   setCompletedAll: (completed: boolean) => void;
   setCompleted: (id: string, completed: boolean) => void;
   clearCompleted: () => void;
+  exchange: (sourceId: string, targetId: string) => void;
   isCompletedAll: boolean;
 }
 
@@ -77,9 +78,20 @@ const useTodos = (options?: Options): Result => {
   const clearCompleted = useCallback(() => {
     setTodos((draft) => draft.filter((todo) => !todo.completed));
   }, []);
+  const exchange = useCallback<Result["exchange"]>((sourceId, targetId) => {
+    setTodos((draft) =>
+      produce(draft, (draft) => {
+        const sourceIndex = draft.findIndex(({ id }) => id === sourceId);
+        const targetIndex = draft.findIndex(({ id }) => id === targetId);
+        [draft[sourceIndex], draft[targetIndex]] = [
+          draft[targetIndex],
+          draft[sourceIndex],
+        ];
+      })
+    );
+  }, []);
   useLayoutEffect(() => {
     if (initialTodos) return;
-    console.debug(storage);
     const loadedTodos = (storage || localStorage).getItem(storageName);
     if (loadedTodos !== null) {
       setTodos(JSON.parse(loadedTodos));
@@ -99,6 +111,7 @@ const useTodos = (options?: Options): Result => {
     setCompletedAll,
     setCompleted,
     clearCompleted,
+    exchange,
   };
 };
 
