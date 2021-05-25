@@ -16,6 +16,8 @@ interface Props {
   onChangeTitle?: (id: string, title: string) => void;
   onChangeCompleted?: (id: string, completed: boolean) => void;
   onRemove?: (id: string) => void;
+  onDragStart: (id: string) => void;
+  onDragEnd: () => void;
 }
 
 const TodoItem = ({
@@ -25,6 +27,8 @@ const TodoItem = ({
   onChangeTitle,
   onChangeCompleted,
   onRemove,
+  onDragStart,
+  onDragEnd,
 }: Props) => {
   const editInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
@@ -62,11 +66,13 @@ const TodoItem = ({
   });
   const handleDragStart = (event: DragEvent<HTMLLIElement>) => {
     setDragging(true);
+    onDragStart(id);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("sourceId", id);
   };
   const handleDragEnd = (event: DragEvent<HTMLLIElement>) => {
     setDragging(false);
+    onDragEnd();
   };
   useEffect(() => {
     editInputRef.current![editing ? "focus" : "blur"]();

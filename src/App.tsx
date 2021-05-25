@@ -17,9 +17,10 @@ function App() {
     setCompleted,
     remove,
     clearCompleted,
-    exchange,
+    insertBefore,
   } = useTodos();
   const filteredTodos = useFilteredTodos(todos, mode);
+  const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
   const handleChangeMode = useEventCallback(() => {
     const hash = document.location.hash;
     const mode = (hash.replace(/#\//g, "") || "all") as Mode;
@@ -28,18 +29,19 @@ function App() {
   const handleDragEnter = useEventCallback(
     (event: DragEvent<HTMLUListElement>) => {
       const targetId = (event.target as HTMLLIElement).dataset.id;
-      console.debug(event.dataTransfer.dropEffect);
+      console.debug(targetId);
+      if (!targetId) return;
+      insertBefore(draggedTodoId!, targetId);
     }
   );
   const handleDragOver = useEventCallback((event: DragEvent) => {
     event.preventDefault();
   });
-  const handleDrop = useEventCallback((event: DragEvent) => {
-    const sourceId = event.dataTransfer.getData("sourceId");
-    const targetId = (event.target as HTMLLIElement).dataset.id;
-    if (sourceId !== targetId) {
-      exchange(sourceId, targetId!);
-    }
+  const handleDragStart = useEventCallback((id: string) => {
+    setDraggedTodoId(id);
+  });
+  const handleDragEnd = useEventCallback(() => {
+    setDraggedTodoId(null);
   });
   useLayoutEffect(() => {
     handleChangeMode();
@@ -60,7 +62,6 @@ function App() {
             className="todo-list"
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
-            onDrop={handleDrop}
           >
             {filteredTodos.map(({ id, title, completed }) => (
               <TodoItem
@@ -71,6 +72,8 @@ function App() {
                 onChangeTitle={setTitle}
                 onChangeCompleted={setCompleted}
                 onRemove={remove}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               />
             ))}
           </ul>

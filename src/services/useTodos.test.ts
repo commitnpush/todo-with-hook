@@ -116,14 +116,16 @@ test("할 일 데이터가 변경될 때 마다 storage에 데이터가 저장�
   expect(setItem.mock.calls[2][1].includes(`"completed":true`)).toBeTruthy();
 });
 
-test("exchange에 sourceId와 targetId를 전달하면 source와 target의 index가 서로 바뀌어야 한다.", () => {
+test("insertBefore sourceId와 targetId를 전달하면 target의 위치에 source가 위치하고 target은 index가 1 증가한다.", () => {
   const initialTodos = getInitialTodos();
   const { result } = renderHook(() => useTodos({ initialTodos, storage }));
-  act(() => result.current.exchange(initialTodos[0].id, initialTodos[1].id));
+  act(() =>
+    result.current.insertBefore(initialTodos[2].id, initialTodos[0].id)
+  );
   expect(
     result.current.todos.findIndex(({ id }) => id === initialTodos[0].id)
   ).toEqual(1);
   expect(
-    result.current.todos.findIndex(({ id }) => id === initialTodos[1].id)
+    result.current.todos.findIndex(({ id }) => id === initialTodos[2].id)
   ).toEqual(0);
 });
